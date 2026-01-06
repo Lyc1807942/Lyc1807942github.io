@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王梦凡 生日快乐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #fff0f5;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        /* 1. 神秘礼物弹窗样式 */
+        .gift-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 0 45px rgba(255, 116, 179, 0.5);
+            text-align: center;
+            z-index: 9999;
+        }
+        .gift-popup h1 {
+            color: #ff6bae;
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 5px #ffc8dd;
+        }
+        .gift-popup input {
+            width: 240px;
+            padding: 14px 18px;
+            border: 3px solid #ffc8dd;
+            border-radius: 12px;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 30px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .gift-popup input:focus {
+            border-color: #ff6bae;
+        }
+        .gift-popup button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background: #ff6bae;
+            color: #fff;
+            font-size: 18px;
+            margin: 0 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .gift-popup button:hover {
+            background: #ff4a95;
+            transform: scale(1.08);
+        }
+        /* 2. Hello Kitty 气泡祝福容器 */
+        .bubble-container {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: url("https://img.icons8.com/fluency/64/000000/hello-kitty.png") repeat;
+            background-size: 50px;
+            background-opacity: 0.1;
+        }
+        .kitty-bubble {
+            position: absolute;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #ffd1dc, #ffb6c1);
+            border-radius: 22px 22px 22px 6px;
+            color: #333333;
+            font-size: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+            animation: popBubble 0.7s ease forwards;
+        }
+        .kitty-bubble::before {
+            content: "🐱";
+            margin-right: 8px;
+        }
+        @keyframes popBubble {
+            0% { opacity: 0; transform: scale(0); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        /* 3. 粒子聚焦文字容器（两行不重叠） */
+        .particle-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #fff0f5;
+            z-index: 999;
+        }
+        .particle-text {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 55px;
+            font-weight: bold;
+            color: #ff6bae;
+            opacity: 0;
+            text-shadow: 3px 3px 8px #ffc8dd;
+        }
+        /* 强制分开两行，彻底不重叠 */
+        #name-text {
+            top: 35%;
+        }
+        #birthday-text {
+            top: 58%;
+            font-size: 48px;
+        }
+        .particle {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: #ff6bae;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- 弹窗画面 -->
+    <div class="gift-popup" id="popup">
+        <h1>神秘礼物</h1>
+        <input type="password" id="pwd-input" placeholder="请输入密码">
+        <button id="confirm-btn">确定</button>
+        <button id="cancel-btn">取消</button>
+    </div>
+
+    <!-- 气泡祝福画面 -->
+    <div class="bubble-container" id="bubbleBox"></div>
+
+    <!-- 粒子文字画面 -->
+    <div class="particle-container" id="particleBox">
+        <div class="particle-text" id="name-text">王梦凡</div>
+        <div class="particle-text" id="birthday-text">happy birthday</div>
+    </div>
+
+    <script>
+        // 元素获取
+        const popup = document.getElementById('popup');
+        const pwdInput = document.getElementById('pwd-input');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const bubbleBox = document.getElementById('bubbleBox');
+        const particleBox = document.getElementById('particleBox');
+        const nameText = document.getElementById('name-text');
+        const birthdayText = document.getElementById('birthday-text');
+        const correctPwd = "0106";
+
+        // 100条 好朋友专属无暧昧生日祝福
+        const friendBlessings = [
+            "王梦凡，生日快乐！新的一岁继续闪闪发光！",
+            "梦凡，生日嗨皮！天天都有小惊喜！",
+            "祝王梦凡新岁无忧，烦恼全跑光！",
+            "梦凡宝贝，生日快乐！吃好喝好没烦恼！",
+            "王梦凡，新的一岁要更勇敢做自己！",
+            "祝梦凡生日快乐，平安健康万事顺意！",
+            "王梦凡，生日超快乐！好运一直围着你！",
+            "梦凡，新岁快乐！所有美好都奔向你！",
+            "祝王梦凡生日快乐，笑口常开元气满满！",
+            "梦凡，生日快乐！继续做快乐的小孩！"
+        ];
+        // 补充到100条不重复祝福
+        while (friendBlessings.length < 100) {
+            const prefixes = ["王梦凡，", "梦凡，"];
+            const suffixes = [
+                "新的一岁要天天开心呀！",
+                "生日快乐！零食奶茶无限续杯！",
+                "生日超棒！烦恼通通退退退！",
+                "愿你新岁收获超多快乐和好运！",
+                "生日快乐！做想做的事超自由！",
+                "新岁平安喜乐，万事胜意！",
+                "生日嗨皮！每天都有好心情！",
+                "愿你被全世界的温柔包围！",
+                "新的一岁，好运和快乐都奔你而来！",
+                "生日快乐！继续做闪闪发光的自己！"
+            ];
+            const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+            friendBlessings.push(randomPrefix + randomSuffix);
+        }
+
+        // 确定按钮事件
+        confirmBtn.addEventListener('click', () => {
+            if (pwdInput.value === correctPwd) {
+                popup.style.display = 'none';
+                showBubbles();
+            } else {
+                alert('密码错误，请重新输入！');
+                pwdInput.value = '';
+            }
+        });
+
+        // 取消按钮事件
+        cancelBtn.addEventListener('click', () => {
+            pwdInput.value = '';
+        });
+
+        // 生成气泡祝福（随机位置防遮挡）
+        function showBubbles() {
+            bubbleBox.style.display = 'block';
+            let index = 0;
+            const timer = setInterval(() => {
+                if (index >= 100) {
+                    clearInterval(timer);
+                    // 气泡展示完跳转粒子画面
+                    setTimeout(() => {
+                        bubbleBox.style.display = 'none';
+                        showParticles();
+                    }, 2000);
+                    return;
+                }
+                const bubble = document.createElement('div');
+                bubble.className = 'kitty-bubble';
+                bubble.innerText = friendBlessings[index];
+                // 随机位置避免遮挡，限制在可视区域内
+                const left = Math.floor(Math.random() * 80) + 5 + '%';
+                const top = Math.floor(Math.random() * 80) + 5 + '%';
+                bubble.style.left = left;
+                bubble.style.top = top;
+                // 随机渐变配色，保持Hello Kitty可爱风
+                const c1 = `rgb(${255}, ${170 + Math.floor(Math.random() * 60)}, ${180 + Math.floor(Math.random() * 60)})`;
+                const c2 = `rgb(${255}, ${140 + Math.floor(Math.random() * 60)}, ${160 + Math.floor(Math.random() * 60)})`;
+                bubble.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+                bubbleBox.appendChild(bubble);
+                index++;
+            }, 100); // 每100ms弹出一个气泡
+        }
+
+        // 生成粒子聚焦效果（粒子分两组对应两行文字）
+        function showParticles() {
+            particleBox.style.display = 'block';
+            const particleCount = 350; // 粒子数量增加，效果更饱满
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                // 粒子初始随机位置
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particleBox.appendChild(particle);
+
+                // 粒子分两组聚焦对应文字
+                setTimeout(() => {
+                    particle.style.transition = 'all 2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    if (i % 2 === 0) {
+                        // 偶数粒子聚焦名字
+                        particle.style.left = nameText.offsetLeft + nameText.offsetWidth / 2 + 'px';
+                        particle.style.top = nameText.offsetTop + nameText.offsetHeight / 2 + 'px';
+                    } else {
+                        // 奇数粒子聚焦生日文字
+                        particle.style.left = birthdayText.offsetLeft + birthdayText.offsetWidth / 2 + 'px';
+                        particle.style.top = birthdayText.offsetTop + birthdayText.offsetHeight / 2 + 'px';
+                    }
+                    particle.style.opacity = 1;
+                }, 300);
+            }
+
+            // 文字渐显动画（先后出现，层次更清晰）
+            setTimeout(() => {
+                nameText.style.transition = 'opacity 1.2s ease';
+                nameText.style.opacity = 1;
+                setTimeout(() => {
+                    birthdayText.style.transition = 'opacity 1.2s ease';
+                    birthdayText.style.opacity = 1;
+                }, 600);
+            }, 1600);
+        }
+    </script>
+</body>
+</html>
